@@ -19,13 +19,17 @@ struct PrimitiveActor : DrawableObject
         Vertices = InVertices;
         Loc = InLocation;
         Texture = InTexture;
-    }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) override
-    {
-        CalculateAABB();
+        VAO.Bind();
 
         VBO.Data(Vertices);
+    }
+
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) override
+    {
+        VAO.Bind();
+
+        CalculateAABB();
 
         Texture->Bind();
 
@@ -35,5 +39,7 @@ struct PrimitiveActor : DrawableObject
         glDrawArrays(GL_TRIANGLES, 0, Vertices.size());
 
         Texture->Unbind();
+
+        VAO.Unbind();
     }
 };

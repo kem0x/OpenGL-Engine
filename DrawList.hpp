@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <algorithm>
+#include <execution>
 #include "Math.hpp"
 
 struct AABB // Axis-Aligned Bounding Boxes
@@ -11,6 +13,12 @@ struct AABB // Axis-Aligned Bounding Boxes
 
 struct DrawableObject : std::enable_shared_from_this<DrawableObject>
 {
+    VertexArrayObject VAO = VertexArrayObject();
+
+    VertexBufferObject VBO = VertexBufferObject();
+
+    ElementBufferObject EBO = ElementBufferObject();
+
     std::string TypeName;
 
     std::vector<Vertex> Vertices;
@@ -37,7 +45,7 @@ struct DrawableObject : std::enable_shared_from_this<DrawableObject>
         BoundingBox.Max = MaxVertex + Loc.Vec;
     }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) = 0;
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) = 0;
 
     void Push();
 };
@@ -64,11 +72,11 @@ public:
         Singleton()->Drawables.emplace_back(InDrawable);
     }
 
-    static void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO)
+    static void Draw(std::shared_ptr<ShaderProgram> Shader)
     {
         for (auto&& Drawable : Singleton()->Drawables)
         {
-            Drawable->Draw(Shader, VBO, EBO);
+            Drawable->Draw(Shader);
         }
     }
 };

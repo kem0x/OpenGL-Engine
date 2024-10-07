@@ -6,41 +6,98 @@ namespace LuaRuntime
 {
     inline std::vector<std::shared_ptr<sol::state>> GLuaStates;
 
+    static auto CollectAllDebugFunctions()
+    {
+        std::vector<sol::function> DebugFunctions;
+
+        for (auto&& LuaState : LuaRuntime::GLuaStates)
+        {
+            auto Fn = LuaState->operator[]("DebugUI");
+            if (Fn)
+            {
+                DebugFunctions.push_back(Fn);
+            }
+        }
+
+        return DebugFunctions;
+    }
+
+    static auto CollectAllRenderFunctions()
+    {
+        std::vector<sol::function> RenderFunctions;
+
+        for (auto&& LuaState : LuaRuntime::GLuaStates)
+        {
+            auto Fn = LuaState->operator[]("Render");
+            if (Fn)
+            {
+                RenderFunctions.push_back(Fn);
+            }
+        }
+
+        return RenderFunctions;
+    }
+
     static void InitLuaStateImGui(std::shared_ptr<sol::state> LuaState)
     {
-        LuaState->set("ImGuiText", &ImGui::Text);
+        sol::table ImGui = LuaState->create_named_table("ImGui");
+
+        ImGui.set_function("Button",
+            [](const char* label) -> bool
+            {
+                return ImGui::Button(label);
+            });
+
+        ImGui.set_function("Text", &ImGui::Text);
     }
 
     static void InitLuaState(std::shared_ptr<sol::state> LuaState)
     {
         LuaState->open_libraries();
 
-        auto Vec2Type = LuaState->new_usertype<glm::vec2>("Vec2", "x", &glm::vec2::x, "y", &glm::vec2::y);
+        auto Vec2Type = LuaState->new_usertype<glm::vec2>("Vec2",
+            "x", &glm::vec2::x,
+            "y", &glm::vec2::y);
         Vec2Type["Create"] = [](float X, float Y)
         {
             return glm::vec2(X, Y);
         };
 
-        auto Vec3Type = LuaState->new_usertype<glm::vec3>("Vec3", "x", &glm::vec3::x, "y", &glm::vec3::y, "z", &glm::vec3::z);
+        auto Vec3Type = LuaState->new_usertype<glm::vec3>("Vec3",
+            "x", &glm::vec3::x,
+            "y", &glm::vec3::y,
+            "z", &glm::vec3::z);
         Vec3Type["Create"] = [](float X, float Y, float Z)
         {
             return glm::vec3(X, Y, Z);
         };
 
-        LuaState->new_usertype<VertexArrayObject>("VertexArrayObject",
-            sol::constructors<VertexArrayObject()>(),
+        auto VAOType = LuaState->new_usertype<VertexArrayObject>("VertexArrayObject",
             "Bind",
             &VertexArrayObject::Bind);
 
-        LuaState->new_usertype<VertexBufferObject>("VertexBufferObject",
-            sol::constructors<VertexBufferObject()>(),
+        VAOType["Create"] = []()
+        {
+            return std::make_shared<VertexArrayObject>();
+        };
+
+        auto VBOType = LuaState->new_usertype<VertexBufferObject>("VertexBufferObject",
             "Bind",
             &VertexBufferObject::Bind);
 
-        LuaState->new_usertype<ElementBufferObject>("ElementBufferObject",
-            sol::constructors<ElementBufferObject()>(),
+        VBOType["Create"] = []()
+        {
+            return std::make_shared<VertexBufferObject>();
+        };
+
+        auto EBOType = LuaState->new_usertype<ElementBufferObject>("ElementBufferObject",
             "Bind",
             &ElementBufferObject::Bind);
+
+        EBOType["Create"] = []()
+        {
+            return std::make_shared<ElementBufferObject>();
+        };
 
         auto ShaderProgramType = LuaState->new_usertype<ShaderProgram>("ShaderProgram",
             "Attach",
@@ -80,6 +137,8 @@ namespace LuaRuntime
 
         LuaState->new_usertype<DebugCamera>("DebugCamera",
             sol::constructors<DebugCamera()>(),
+            "CameraPos",
+            &DebugCamera::CameraPos,
             "CameraFront",
             &DebugCamera::CameraFront,
             "Projection",
@@ -129,7 +188,7 @@ namespace LuaRuntime
         LuaState->operator[]("Projection2D") = glm::ortho(0.0f, static_cast<float>(1280), static_cast<float>(720), 0.0f, -1.0f, 1.0f);
     }
 
-    void Init()
+    static void Init()
     {
         for (const auto& Entry : std::filesystem::directory_iterator(std::filesystem::current_path() / "Scripts"))
         {

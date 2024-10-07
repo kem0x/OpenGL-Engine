@@ -16,8 +16,7 @@ struct Sprite : DrawableObject
 
     Sprite(std::shared_ptr<Texture2D> InTexture, glm::vec2 InPosition, glm::vec2 InSize, float InRotate, glm::vec3 InColor)
     {
-        Vertices = 
-        {
+        Vertices = {
             { .Position = { 0.0f, 1.0f, 0.f }, .TextureCoord = { 0.0f, 1.0f } },
             { .Position = { 1.0f, 0.0f, 0.f }, .TextureCoord = { 1.0f, 0.0f } },
             { .Position = { 0.0f, 0.0f, 0.f }, .TextureCoord = { 0.0f, 0.0f } },
@@ -31,11 +30,15 @@ struct Sprite : DrawableObject
         Size = InSize;
         Rotate = InRotate;
         Color = InColor;
+
+        VAO.Bind();
+
+        VBO.Data(Vertices);
     }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) override
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) override
     {
-        VBO.Data(Vertices);
+        VAO.Bind();
 
         Texture->Bind();
 
@@ -54,5 +57,7 @@ struct Sprite : DrawableObject
         glDrawArrays(GL_TRIANGLES, 0, Vertices.size());
 
         Texture->Unbind();
+
+        VAO.Unbind();
     }
 };

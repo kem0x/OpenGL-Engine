@@ -25,7 +25,6 @@ struct Camera
 
 struct DebugCamera : Camera
 {
-
     virtual void Update() override
     {
         View = glm::lookAt(CameraPos, CameraPos + CameraFront, CameraUp);
@@ -53,44 +52,50 @@ struct DebugCamera : Camera
                 if (Pitch < -89.0f)
                     Pitch = -89.0f;
 
-                glm::vec3 Direction;
+                glm::vec3 Direction {};
                 Direction.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
                 Direction.y = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
                 Direction.z = sin(glm::radians(Pitch)); // Since the positive Z-axis is up
                 CameraFront = glm::normalize(Direction);
             });
 
-        Keyboard::AddWKeyEvent(
+        Keyboard::AddKeyboardEvent(
+            GLFW_KEY_W,
             [&]()
             {
                 CameraPos += CameraSpeed() * CameraFront;
             });
 
-        Keyboard::AddSKeyEvent(
+        Keyboard::AddKeyboardEvent(
+            GLFW_KEY_S,
             [&]()
             {
                 CameraPos -= CameraSpeed() * CameraFront;
             });
 
-        Keyboard::AddAKeyEvent(
+        Keyboard::AddKeyboardEvent(
+            GLFW_KEY_A,
             [&]()
             {
                 CameraPos -= glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed();
             });
 
-        Keyboard::AddDKeyEvent(
+        Keyboard::AddKeyboardEvent(
+            GLFW_KEY_D,
             [&]()
             {
                 CameraPos += glm::normalize(glm::cross(CameraFront, CameraUp)) * CameraSpeed();
             });
 
-        Keyboard::AddEKeyEvent(
+        Keyboard::AddKeyboardEvent(
+            GLFW_KEY_E,
             [&]()
             {
                 CameraPos.z += CameraSpeed();
             });
 
-        Keyboard::AddQKeyEvent(
+        Keyboard::AddKeyboardEvent(
+            GLFW_KEY_Q,
             [&]()
             {
                 CameraPos.z -= CameraSpeed();

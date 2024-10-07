@@ -60,14 +60,50 @@ int main(int argc, char** argv)
 
     LuaRuntime::Init();
 
+    auto LuaRenderFunctions = LuaRuntime::CollectAllRenderFunctions();
+    auto LuaDebugUIFunctions = LuaRuntime::CollectAllDebugFunctions();
+
     // auto HitScanText = std::make_shared<Text>(0, 35, "", Color::FromInt(136, 137, 150, 255));
     // HitScanText->Push();
 
     // ChunkSystem CS;
     // CS.GenerateTerrainChunk();
 
+    /* auto FragmentShader = Shader(GL_FRAGMENT_SHADER);
+    FragmentShader.Source("E:\\source\\repos\\TheCube\\Shaders\\shader3d.frag");
+    FragmentShader.Compile();
+
+    auto VertexShader = Shader(GL_VERTEX_SHADER);
+    VertexShader.Source("E:\\source\\repos\\TheCube\\Shaders\\shader3d.vert");
+    VertexShader.Compile();
+
+    auto ShaderProg = std::make_shared<ShaderProgram>();
+    ShaderProg->Attach(VertexShader);
+    ShaderProg->Attach(FragmentShader);
+    ShaderProg->Link();
+
+    ShaderProg->Use();
+
+    auto DefaultCamera = DebugCamera();
+    DefaultCamera.SetupInput();
+
+    auto GrassTexture = std::make_shared<Texture2D>("E:\\source\\repos\\TheCube\\Textures\\grass.png", 6408);
+
+    auto GrassBlock = std::make_shared<Cube>(Location::FromWorldCoords({ 200, 200, 200 }), GrassTexture);
+    GrassBlock->Push();
+
+    ShaderProg->Location<Vertex, offsetof(Vertex, Position), 3>("aPos");
+    ShaderProg->Location<Vertex, offsetof(Vertex, TextureCoord), 2>("aTexCoord");
+    */
+
     while (!MainWindow.ShouldClose())
     {
+        if (glfwGetWindowAttrib(MainWindow.window, GLFW_ICONIFIED) != 0)
+        {
+            ImGui_ImplGlfw_Sleep(10);
+            continue;
+        }
+
         glfwPollEvents();
 
         UpdateDeltaTime();
@@ -77,9 +113,20 @@ int main(int argc, char** argv)
         glViewport(0, 0, WindowSize.first, WindowSize.second);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        for (auto&& LuaState : LuaRuntime::GLuaStates)
+        /* 
+        ShaderProg->Use();
+
+        DefaultCamera.Update();
+
+        ShaderProg->Uniform("projection", DefaultCamera.Projection);
+        ShaderProg->Uniform("view", DefaultCamera.View);
+
+        Drawlist::Draw(ShaderProg);
+        */
+
+        for (auto&& Render : LuaRenderFunctions)
         {
-            LuaState->operator[]("Render")();
+            Render();
         }
 
         /*
@@ -94,12 +141,6 @@ int main(int argc, char** argv)
             HitScanText->SetText("NOT Aiming at a target");
         }*/
 
-        if (glfwGetWindowAttrib(MainWindow.window, GLFW_ICONIFIED) != 0)
-        {
-            ImGui_ImplGlfw_Sleep(10);
-            continue;
-        }
-
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -108,13 +149,10 @@ int main(int argc, char** argv)
 
         ImGui::Begin("Debug UI");
 
-        for (auto&& LuaState : LuaRuntime::GLuaStates)
+        for (auto&& DebugUI : LuaDebugUIFunctions)
         {
-            auto DebugUI = LuaState->operator[]("DebugUI");
-            if (DebugUI)
-            {
-                DebugUI();
-            }
+            DebugUI();
+            ImGui::Separator();
         }
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);

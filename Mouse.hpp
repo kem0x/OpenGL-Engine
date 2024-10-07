@@ -11,10 +11,10 @@ namespace Mouse
     bool FirstMouse = true;
     float LastX = 400, LastY = 300;
 
-    inline std::vector<std::function<void(float xoffset, float yoffset, float lastX, float lastY)>> MouseCallbacks;
+    inline std::vector<std::function<void(float xoffset, float yoffset, float lastX, float lastY)>> Callbacks;
     inline void AddMouseEvent(std::function<void(float xoffset, float yoffset, float lastX, float lastY)> Fn)
     {
-        MouseCallbacks.emplace_back(Fn);
+        Callbacks.emplace_back(Fn);
     }
 
     void MouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -31,7 +31,7 @@ namespace Mouse
         LastX = xpos;
         LastY = ypos;
 
-        for (auto&& Callback : MouseCallbacks)
+        for (auto&& Callback : Callbacks)
         {
             Callback(XOffset, YOffset, LastX, LastY);
         }

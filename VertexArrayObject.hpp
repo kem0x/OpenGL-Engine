@@ -14,4 +14,9 @@ struct VertexArrayObject
     {
         glBindVertexArray(Index);
     }
+
+    void Unbind()
+    {
+        glBindVertexArray(0);
+    }
 };

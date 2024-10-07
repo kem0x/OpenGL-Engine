@@ -9,20 +9,27 @@
 struct Mesh : DrawableObject
 {
     std::vector<unsigned int> Indices;
-    std::vector<Texture2D> Textures;
+    std::vector<std::shared_ptr<Texture2D>> Textures;
 
     Mesh(std::vector<Vertex> InVertices,
         std::vector<unsigned int> InIndices,
-        std::vector<Texture2D> InTextures, Location InLoc)
+        std::vector<std::shared_ptr<Texture2D>> InTextures, Location InLoc)
     {
         Loc = InLoc;
         Vertices = InVertices;
         Indices = InIndices;
         Textures = InTextures;
+
+        VAO.Bind();
+
+        VBO.Data(Vertices);
+        EBO.Data(Indices);
     }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) override
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) override
     {
+        VAO.Bind();
+
         CalculateAABB();
 
         unsigned int DiffuseNr = 1;
@@ -33,7 +40,7 @@ struct Mesh : DrawableObject
 
             // retrieve texture number (the N in diffuse_textureN)
             std::string number;
-            std::string name = Textures[i].Type;
+            std::string name = Textures[i]->Type;
 
             if (name == "texture_diffuse")
             {
@@ -46,11 +53,8 @@ struct Mesh : DrawableObject
 
             Shader->Uniform((name + number).c_str(), i);
 
-            glBindTexture(GL_TEXTURE_2D, Textures[i].Index);
+            glBindTexture(GL_TEXTURE_2D, Textures[i]->Index);
         }
-
-        VBO.Data(Vertices);
-        EBO.Data(Indices);
 
         glActiveTexture(GL_TEXTURE0);
 
@@ -58,5 +62,7 @@ struct Mesh : DrawableObject
         Shader->Uniform("model", Model);
 
         glDrawElements(GL_TRIANGLES, Indices.size(), GL_UNSIGNED_INT, 0);
+        
+        VAO.Unbind();
     }
 };

@@ -40,7 +40,7 @@ struct Text : DrawableObject
         _Color = c;
     }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) override
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) override
     {
         gltBeginDraw();
 

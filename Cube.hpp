@@ -110,12 +110,16 @@ struct Cube : PrimitiveActor
         Vertices = CubeVertices;
         Loc = InWorldLocation;
         Texture = InTexture;
+
+        VAO.Bind();
+
+        VBO.Data(Vertices);
     }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) override
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) override
     {
         CalculateAABB();
 
-        __super::Draw(Shader, VBO, EBO);
+        __super::Draw(Shader);
     }
 };

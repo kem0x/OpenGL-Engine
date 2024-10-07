@@ -1,6 +1,7 @@
 #pragma once
 #include "GLAD/glad.h"
 #include <vector>
+#include <mutex>
 
 struct VertexBufferObject
 {
@@ -17,7 +18,7 @@ struct VertexBufferObject
     }
 
     template <typename T>
-    void Data(std::vector<T> InData)
+    void Data(std::vector<T>& InData)
     {
         Bind();
 

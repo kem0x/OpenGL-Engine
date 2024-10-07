@@ -3,6 +3,8 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <algorithm>
+#include <execution>
 #include "DrawList.hpp"
 #include "Mesh.hpp"
 
@@ -13,8 +15,8 @@ struct Model : DrawableObject
     Location Loc;
 
     std::string Path;
-    std::vector<Texture2D> LoadedTextures;
-    std::vector<Mesh> Meshes;
+    std::vector<std::shared_ptr<Texture2D>> LoadedTextures;
+    std::vector<std::shared_ptr<Mesh>> Meshes;
 
     Model(std::string ModelPath, Location InLoc)
     {
@@ -23,11 +25,11 @@ struct Model : DrawableObject
         LoadModel(ModelPath);
     }
 
-    std::vector<Texture2D> LoadMaterialTextures(aiMaterial* Mat, aiTextureType Type, std::string TypeName)
+    std::vector<std::shared_ptr<Texture2D>> LoadMaterialTextures(aiMaterial* Mat, aiTextureType Type, std::string TypeName)
     {
         auto Directory = Path.substr(0, Path.find_last_of('\\'));
 
-        std::vector<Texture2D> Textures;
+        std::vector<std::shared_ptr<Texture2D>> Textures;
         for (unsigned int i = 0; i < Mat->GetTextureCount(Type); i++)
         {
             aiString Str;
@@ -36,7 +38,7 @@ struct Model : DrawableObject
             bool Skip = false;
             for (unsigned int j = 0; j < LoadedTextures.size(); j++)
             {
-                if (LoadedTextures[j].Path.ends_with(Str.C_Str()))
+                if (LoadedTextures[j]->Path.ends_with(Str.C_Str()))
                 {
                     Textures.emplace_back(LoadedTextures[j]);
                     Skip = true;
@@ -46,8 +48,9 @@ struct Model : DrawableObject
 
             if (!Skip)
             {
-                auto Texture = Texture2D(Directory + '/' + Str.C_Str());
-                Texture.Type = TypeName;
+                auto TexPath = std::string(Directory + '/' + Str.C_Str());
+                auto Texture = std::make_shared<Texture2D>(TexPath, (GLenum)GL_RGB);
+                Texture->Type = TypeName;
                 Textures.emplace_back(Texture);
                 LoadedTextures.emplace_back(Texture);
             }
@@ -83,10 +86,10 @@ struct Model : DrawableObject
         }
     }
 
-    Mesh ProcessMesh(aiMesh* InMesh, const aiScene* InScene)
+    std::shared_ptr<Mesh> ProcessMesh(aiMesh* InMesh, const aiScene* InScene)
     {
         std::vector<unsigned int> Indices;
-        std::vector<Texture2D> Textures;
+        std::vector<std::shared_ptr<Texture2D>> Textures;
 
         for (unsigned int i = 0; i < InMesh->mNumVertices; i++)
         {
@@ -137,23 +140,23 @@ struct Model : DrawableObject
         aiMaterial* Material = InScene->mMaterials[InMesh->mMaterialIndex];
 
         // 1. diffuse maps
-        std::vector<Texture2D> DiffuseMaps = LoadMaterialTextures(Material, aiTextureType_DIFFUSE, "texture_diffuse");
+        auto DiffuseMaps = LoadMaterialTextures(Material, aiTextureType_DIFFUSE, "texture_diffuse");
         Textures.insert(Textures.end(), DiffuseMaps.begin(), DiffuseMaps.end());
 
         // 2. specular maps
-        std::vector<Texture2D> SpecularMaps = LoadMaterialTextures(Material, aiTextureType_SPECULAR, "texture_specular");
+        auto SpecularMaps = LoadMaterialTextures(Material, aiTextureType_SPECULAR, "texture_specular");
         Textures.insert(Textures.end(), SpecularMaps.begin(), SpecularMaps.end());
 
         // 3. normal maps
-        std::vector<Texture2D> NormalMaps = LoadMaterialTextures(Material, aiTextureType_HEIGHT, "texture_normal");
+        auto NormalMaps = LoadMaterialTextures(Material, aiTextureType_HEIGHT, "texture_normal");
         Textures.insert(Textures.end(), NormalMaps.begin(), NormalMaps.end());
 
         // 4. height maps
-        std::vector<Texture2D> HeightMaps = LoadMaterialTextures(Material, aiTextureType_AMBIENT, "texture_height");
+        auto HeightMaps = LoadMaterialTextures(Material, aiTextureType_AMBIENT, "texture_height");
         Textures.insert(Textures.end(), HeightMaps.begin(), HeightMaps.end());
 
         // return a mesh object created from the extracted mesh data
-        return Mesh(Vertices, Indices, Textures, Loc);
+        return std::make_shared<Mesh>(Vertices, Indices, Textures, Loc);
     }
 
     void SetShaderProgram(ShaderProgram InProgram)
@@ -161,18 +164,18 @@ struct Model : DrawableObject
         Program = InProgram;
     }
 
-    virtual void Draw(std::shared_ptr<ShaderProgram> Shader, VertexBufferObject VBO, ElementBufferObject EBO) override
+    virtual void Draw(std::shared_ptr<ShaderProgram> Shader) override
     {
-        AABB ModelAABB = Meshes[0].BoundingBox;
+        AABB ModelAABB = Meshes[0]->BoundingBox;
 
         for (auto&& Mesh : Meshes)
         {
-            ModelAABB.Min = glm::min(ModelAABB.Min, Mesh.BoundingBox.Min);
-            ModelAABB.Max = glm::max(ModelAABB.Max, Mesh.BoundingBox.Max);
+            ModelAABB.Min = glm::min(ModelAABB.Min, Mesh->BoundingBox.Min);
+            ModelAABB.Max = glm::max(ModelAABB.Max, Mesh->BoundingBox.Max);
 
             BoundingBox = ModelAABB;
 
-            Mesh.Draw(Shader, VBO, EBO);
+            Mesh->Draw(Shader);
         }
     }
 };

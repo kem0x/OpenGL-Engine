@@ -1,12 +1,3 @@
-VertexArray = VertexArrayObject.new();
-VertexArray:Bind();
-
-VertexBuffer = VertexBufferObject.new();
-VertexBuffer:Bind();
-
-ElementBuffer = ElementBufferObject.new();
-ElementBuffer:Bind();
-
 VertexShader = Shader.new(35633);
 VertexShader:Source("E:\\source\\repos\\TheCube\\Shaders\\shader2d.vert");
 VertexShader:Compile();
@@ -24,7 +15,7 @@ ShaderProg:VertexLocations();
 
 ShaderProg:Use();
 
-GrassTexture = Texture2D.Create("E:\\source\\repos\\TheCube\\Textures\\grass.png", 6408);
+GrassTexture = Texture2D.Create("E:\\source\\repos\\TheCube\\Textures\\Kemoware Banner.png", 6408);
 
 GrassSprite = Sprite.Create(GrassTexture, Vec2.Create(100.0, 100.0), Vec2.Create(200.0, 200.0), 0.0, Vec3.Create(1.0, 1.0, 1.0));
 GrassSprite:Push();
@@ -35,7 +26,5 @@ Render = function()
     ShaderProg:UniformInt("image", 0);
     ShaderProg:UniformMat4("projection", Projection2D);
 
-    VertexArray:Bind();
-
-    Drawlist.Draw(ShaderProg, VertexBuffer, ElementBuffer);
+    Drawlist.Draw(ShaderProg);
 end

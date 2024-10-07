@@ -17,7 +17,7 @@ struct ElementBufferObject
     }
 
     template <typename T>
-    void Data(std::vector<T> InData)
+    void Data(std::vector<T>& InData)
     {
         Bind();
 
